@@ -1,0 +1,6 @@
+.block_profilepic_bigbutton_container {text-align: center; display inline-block; float: left; padding-right: 20px}
+.block_profilepic_bigbutton_container {height: 165px; margin-left: auto;margin-right: auto; width: 150px; padding-top: 5px}
+.block_profilepic_bigbutton_container input[type="image"] {width: 100px;height: 100px}
+.block_profilepic_genderheading {text-align: center;} 
+.block_profilepic_profilelink {display: block;} 
+.block_profilepic_updatelink {display: block;} 
