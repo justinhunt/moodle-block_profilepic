@@ -24,9 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2015041502;        // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires  = 2012112900;        // Requires this Moodle version
+$plugin->version   = 2025120800;        // The current plugin version (Date: YYYYMMDDXX)
+$plugin->requires  = 2022112800;        // Requires Moodle 4.1+
 $plugin->component = 'block_profilepic'; // Full name of the plugin (used for diagnostics)
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.0.0 (Build 2014092500)';
-$plugin->dependencies = array('filter_poodll' => 2014053000);
+$plugin->release   = '2.0.0 (Build 2025120800)';

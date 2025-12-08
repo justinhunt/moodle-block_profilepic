@@ -1,0 +1,27 @@
+<div id="{{uniqid}}_whiteboard_container" style="text-align: center;">
+    <canvas id="{{uniqid}}_wb_canvas" width="320" height="240" style="border: 1px solid #000; cursor: crosshair; touch-action: none;"></canvas>
+    
+    <div id="{{uniqid}}_toolbar" class="block_profilepic_whiteboard_toolbar">
+        <div class="block_profilepic_colors" id="{{uniqid}}_colors">
+            <div class="block_profilepic_color" data-color="red" style="background: red;"></div>
+            <div class="block_profilepic_color" data-color="blue" style="background: blue;"></div>
+            <div class="block_profilepic_color" data-color="green" style="background: green;"></div>
+            <div class="block_profilepic_color" data-color="white" style="background: white;"></div>
+            <div class="block_profilepic_color" data-color="black" style="background: black; border: 2px solid #000;"></div> <!-- Default selected -->
+            <div class="block_profilepic_color" data-color="yellow" style="background: yellow;"></div>
+        </div>
+        <div class="block_profilepic_sizes" id="{{uniqid}}_sizes">
+             <div class="block_profilepic_size" data-size="3"><div class="block_profilepic_size_circle" style="width: 5px; height: 5px;"></div></div>
+             <div class="block_profilepic_size" data-size="7" style="border: 2px solid #000;"><div class="block_profilepic_size_circle" style="width: 10px; height: 10px;"></div></div> <!-- Default selected -->
+             <div class="block_profilepic_size" data-size="12"><div class="block_profilepic_size_circle" style="width: 15px; height: 15px;"></div></div>
+             <div class="block_profilepic_size" data-size="20"><div class="block_profilepic_size_circle" style="width: 20px; height: 20px;"></div></div>
+        </div>
+    </div>
+    <br>
+    <button type="button" id="{{uniqid}}_clear_btn" class="btn btn-secondary">{{#str}}clear, core{{/str}}</button>
+</div>
+{{#js}}
+require(['block_profilepic/whiteboard'], function(whiteboard) {
+    whiteboard.init('{{uniqid}}');
+});
+{{/js}}

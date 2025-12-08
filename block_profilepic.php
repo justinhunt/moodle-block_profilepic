@@ -26,14 +26,12 @@ defined('MOODLE_INTERNAL') || die();
 
 class block_profilepic extends block_base {
 
-    function init() {
+    public function init(): void {
         $this->title = get_string('title', 'block_profilepic');
     }
 
-    function get_content() {
-        global $CFG, $OUTPUT, $DB, $USER;
-        $renderer = $this->page->get_renderer('block_profilepic');
-        $def_config = get_config('block_profilepic');
+    public function get_content() {
+        global $USER, $DB;
 
         if ($this->content !== null) {
             return $this->content;
@@ -45,58 +43,49 @@ class block_profilepic extends block_base {
         }
 
         $this->content = new stdClass();
-        $this->content->items = array();
-        $this->content->icons = array();
+        $this->content->items = [];
+        $this->content->icons = [];
         $this->content->footer = '';
 
         // user/index.php expect course context, so get one if page has module context.
-        $currentcontext = $this->page->context->get_course_context(false);
+        // Note: this line seemed unused in original code but keeping context logic if needed.
+        // $currentcontext = $this->page->context->get_course_context(false);
 
-        if (! empty($this->config->text)) {
+        if (!empty($this->config->text)) {
             $this->content->text = $this->config->text;
         }
         
         $this->title = isset($this->config->title) ? format_text($this->config->title) :
-        						format_string(get_string('title','block_profilepic'));
+                                format_string(get_string('title', 'block_profilepic'));
 
-//Note this
-// $haspicture = $DB->get_field('user', 'picture', array('id'=>$user->id));
+        $renderer = $this->page->get_renderer('block_profilepic');
+        $def_config = get_config('block_profilepic');
 
-
-
-        if (! empty($this->config->text)) {
-            $this->content->text .= $this->config->text;
+        // Go to profile pic form.
+        $user = $DB->get_record('user', ['id' => $USER->id]);
+        if ($user) {
+            if ($user->picture < 2 || empty($def_config->newonly)) {
+                $this->content->text = $renderer->show_picture_linked($user, $this->page);
+            } else {
+                $this->content->text = $renderer->show_picture_unlinked($user, $this->page);
+            }
+            
+            if (!empty($def_config->showprofilelink)) {
+                $this->content->text .= $renderer->show_profile_link();
+            }
         }
-
-		//go to profile pic form
-		$user = $DB->get_record('user',  array('id'=>$USER->id));
-		if($user){
-			if($user->picture<2 || !$def_config->newonly){
-				$this->content->text = $renderer->show_picture_linked($user,$this->page);
-			}else{
-				$this->content->text = $renderer->show_picture_unlinked($user,$this->page);
-			}
-			
-			if($def_config->showprofilelink){
-				$this->content->text .= $renderer->show_profile_link();
-			}
-		}
         return $this->content;
     }
 
-    //
-    public function applicable_formats() {
-        return array('all' => true);
+    public function applicable_formats(): array {
+        return ['all' => true];
     }
 
-    public function instance_allow_multiple() {
+    public function instance_allow_multiple(): bool {
           return true;
     }
 
-    function has_config() {return true;}
-
-    public function cron() {
-            mtrace( "Hey, my cron script is running" );
-                      return true;
+    public function has_config(): bool {
+        return true;
     }
 }

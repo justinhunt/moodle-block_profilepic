@@ -1,0 +1,12 @@
+<div id="{{uniqid}}_snapshot_container" style="text-align: center;">
+    <video id="{{uniqid}}_video" width="320" height="240" autoplay playsinline muted style="border: 1px solid #ccc;"></video>
+    <canvas id="{{uniqid}}_canvas" width="320" height="240" style="display:none; border: 1px solid #ccc;"></canvas>
+    <br>
+    <button type="button" id="{{uniqid}}_snap_btn" class="btn btn-secondary">{{#str}}snapbuttontext, block_profilepic{{/str}}</button>
+    <button type="button" id="{{uniqid}}_retake_btn" class="btn btn-secondary" style="display:none;">{{#str}}retake, block_profilepic{{/str}}</button>
+</div>
+{{#js}}
+require(['block_profilepic/snapshot'], function(snapshot) {
+    snapshot.init('{{uniqid}}');
+});
+{{/js}}

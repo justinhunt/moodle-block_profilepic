@@ -1,6 +1,76 @@
-.block_profilepic_bigbutton_container {text-align: center; display inline-block; float: left; padding-right: 20px}
-.block_profilepic_bigbutton_container {height: 165px; margin-left: auto;margin-right: auto; width: 150px; padding-top: 5px}
-.block_profilepic_bigbutton_container input[type="image"] {width: 100px;height: 100px}
-.block_profilepic_genderheading {text-align: center;} 
-.block_profilepic_profilelink {display: block;} 
-.block_profilepic_updatelink {display: block;} 
+.block_profilepic_bigbutton_container {
+    text-align: center;
+    float: left;
+    padding-right: 20px
+}
+
+.block_profilepic_bigbutton_container {
+    height: 165px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 150px;
+    padding-top: 5px
+}
+
+.block_profilepic_bigbutton_container input[type="image"] {
+    width: 100px;
+    height: 100px
+}
+
+.block_profilepic_genderheading {
+    text-align: center;
+}
+
+.block_profilepic_profilelink {
+    display: block;
+}
+
+.block_profilepic_updatelink {
+    display: block;
+}
+
+.block_profilepic_whiteboard_toolbar {
+    margin-top: 5px;
+    border: 1px solid #000;
+    padding: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+    background: #fff;
+}
+
+.block_profilepic_colors,
+.block_profilepic_sizes {
+    display: flex;
+    gap: 3px;
+}
+
+.block_profilepic_color {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+}
+
+.block_profilepic_size {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.block_profilepic_size_circle {
+    background: #666;
+    border-radius: 50%;
+}
+
+.block_profilepic_color.selected,
+.block_profilepic_size.selected {
+    border: 2px solid #000;
+}

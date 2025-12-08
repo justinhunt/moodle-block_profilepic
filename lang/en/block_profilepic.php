@@ -43,6 +43,7 @@ $string['do_add_label'] = 'Update Profile Picture';
 $string['snapbuttontext'] = 'Snap your Picture'; 
 $string['uploadbuttontext'] = 'Upload your Picture';
 $string['choosebuttontext'] = 'Choose a Picture';
+$string['whiteboardbuttontext'] = 'Draw your Picture';
 $string['canceledbyuser'] = 'Picture Edit Canceled by User'; 
 $string['addedsuccessfully'] = 'Profile Picture Updated Succesfully';
 $string['failedtoadd'] = 'Failed to Add Profile Picture';
@@ -64,5 +65,13 @@ $string['title'] = 'Profile Picture';
 $string['maleavatars'] = 'Male Pictures';
 $string['femaleavatars'] = 'Female Pictures';
 $string['profilelink'] = 'Edit my profile';
-
+$string['label_showsnapshot'] = 'Show Snapshot Option';
+$string['desc_showsnapshot'] = '';
+$string['label_showwhiteboard'] = 'Show Whiteboard Option';
+$string['desc_showwhiteboard'] = '';
+$string['instructions_snapshot'] = 'Instructions for Snapshot';
+$string['instructions_snapshot_def'] = 'Use your webcam to take a picture of yourself.';
+$string['instructions_whiteboard'] = 'Instructions for Whiteboard';
+$string['instructions_whiteboard_def'] = 'Draw a picture of yourself on the whiteboard.';
+$string['retake'] = 'Retake';
 

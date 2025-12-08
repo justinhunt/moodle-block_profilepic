@@ -21,24 +21,25 @@
  * This page displays options for updating your user profile
  *
  * @package    block_profilepic
- * @author     Justin Hunt 
+ * @author     Justin Hunt
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
  * @copyright  (C) 1999 onwards Martin Dougiamas  http://dougiamas.com
  */
 
+declare(strict_types=1);
+
 require('../../config.php');
 require_once($CFG->dirroot . '/blocks/profilepic/forms.php');
-require_once($CFG->libdir.'/gdlib.php');
+require_once($CFG->libdir . '/gdlib.php');
 
 
 require_login();
-$action = optional_param('action','chooserecorder', PARAM_TEXT); //the user action to take
-$rectype = optional_param('rectype', 0,PARAM_TEXT); //the user action to take
+$action = optional_param('action', 'chooserecorder', PARAM_TEXT); // The user action to take.
+$rectype = optional_param('rectype', 0, PARAM_INT); // The user action to take.
 
 
-global $USER, $COURSE;
+global $USER, $COURSE, $PAGE, $SITE, $DB;
 
-//$context = context_course::instance($courseid);
 $usercontext = context_user::instance($USER->id);
 $PAGE->set_course($COURSE);
 $PAGE->set_url('/blocks/profilepic/view.php');
@@ -49,175 +50,233 @@ $PAGE->navbar->add(get_string('editprofilepicture', 'block_profilepic'));
 
 $renderer = $PAGE->get_renderer('block_profilepic');
 
-// OUTPUT
+// OUTPUT.
 echo $renderer->header();
-$message=false;
+$message = false;
 
-//only admins and editing teachers should get here really
-if(!has_capability('block/profilepic:viewform', $usercontext) ){
-	echo $renderer->heading(get_string('inadequatepermissions', 'block_profilepic'), 3, 'main');
-	echo $renderer->footer();
-	return;
- }
+// Only admins and editing teachers should get here really? Wait, this is for users to update their own profile pic.
+// The capability check suggests only those who can view form?
+// existing code: if(!has_capability('block/profilepic:viewform', $usercontext) ){
+if (!has_capability('block/profilepic:viewform', $usercontext)) {
+    echo $renderer->heading(get_string('inadequatepermissions', 'block_profilepic'), 3, 'main');
+    echo $renderer->footer();
+    return;
+}
 
-//get our config
+// Get our config.
 $def_config = get_config('block_profilepic');
 
-//prepare fileareas etc
-$usercontextid=context_user::instance($USER->id)->id;
-$draftitemid = file_get_submitted_draft_itemid(BPP_FILENAMECONTROL);
-switch ($rectype){
-    case BPP_UPLOAD: $instructions = $def_config->uploadinstructions;break;
-    case BPP_CHOOSE: $instructions = $def_config->chooseinstructions;break;
+// Prepare fileareas etc.
+$usercontextid = context_user::instance($USER->id)->id;
+// BPP_FILENAMECONTROL is a constant in the form class now, but we need it here.
+// Ideally usage should be cleaned up. usage: block_profilepic_form::BPP_FILENAMECONTROL.
+$draftitemid = file_get_submitted_draft_itemid(block_profilepic_form::BPP_FILENAMECONTROL);
+
+$instructions = '';
+switch ($rectype) {
+    case block_profilepic_form::BPP_UPLOAD:
+        $instructions = $def_config->uploadinstructions;
+        break;
+    case block_profilepic_form::BPP_SNAPSHOT:
+        $instructions = $def_config->snapshotinstructions;
+        break;
+    case block_profilepic_form::BPP_WHITEBOARD:
+        $instructions = $def_config->whiteboardinstructions;
+        break;
+    case block_profilepic_form::BPP_CHOOSE:
+        $instructions = $def_config->chooseinstructions;
+        break;
 }
 
 
-switch($action){
+switch ($action) {
 
+    case 'add':
 
-	case 'add':
-
-		file_prepare_draft_area($draftitemid, $usercontextid, 'user', 'icon', 0, null,null);
-		
-		$addform = new block_profilepic_form(null,array('rectype'=>$rectype,
-		'usercontextid'=>$usercontextid, 
-		'draftitemid'=>$draftitemid,
-		'instructions'=>$instructions));
-		
-		$form_data = new stdClass();
-		$addform->set_data($form_data);
-		echo $renderer->show_form($addform,get_string('picformheading', 'block_profilepic'));
-		return;
-	
-	
-	
-	case 'doadd':
-		//get add form
-		
-		$add_form = new block_profilepic_form(null,array('rectype'=>$rectype,
-            'usercontextid'=>$usercontextid,
-            'draftitemid'=>$draftitemid,
-            'instructions'=>$instructions));
-		
-		if ($add_form->is_cancelled()) {
-			$message =  get_string('canceledbyuser','block_profilepic');
-			break;
-		}
-		
-		$data = $add_form->get_data();
-		$success = false;
-
-		if($data){
-			$datavars = get_object_vars($data);
-			//this is a bit messy. snapshot stores filename in BPP_filename control
-			//as does choose. But choose does not store file suffix there. We have to add it.
-			//upload file stores draft item id, so we fuddle all that here
-			switch($datavars['rectype']){
-				case BPP_UPLOAD:
-					$draftitemid= $datavars[BPP_FILENAMECONTROL];
-					$file = block_profilepic_open_file($draftitemid);
-					break;
-				case BPP_CHOOSE:
-					if($datavars[BPP_FILENAMECONTROL]){
-						$avatarpath = $CFG->dirroot . 
-							'/blocks/profilepic/pix/avatars/' . 
-							$datavars[BPP_FILENAMECONTROL] .
-							'.png';
-						$success = block_profilepic_save_profile_image($avatarpath);
-					}
-					break;
-				default:
-					$draftitemid= $datavars['draftitemid'];
-					$file = block_profilepic_open_file($draftitemid);
-			}
-			
-			//logic branches a bit. Avatars are not in moodle file system
-			//so they are done differently.
-			if($datavars['rectype']!=BPP_CHOOSE && $file){
-				$temppath = $file->copy_content_to_temp();
-				$success = block_profilepic_save_profile_image($temppath);
-			}		
-		}
-		if($success){
-			//inform user of success
-			$message = get_string('addedsuccessfully','block_profilepic');
-			//delete temp files. Avatars don't produce temp files.
-			if($datavars['rectype']!=BPP_CHOOSE){
-				@unlink($temppath);
-			}
-		}else{
-			$message =  get_string('failedtoadd','block_profilepic');
-		}
-		
-	case 'chooserecorder':
-	default:
-		//Just flow on
-
-}
-
-	//if we have a status message, display it.
-	if($message){
-		echo $renderer->heading($message,5,'main');
-	}
-	$user = $DB->get_record('user', array('id'=>$USER->id));
-	if($user && $user->picture){
-		echo $renderer->show_currentpicture($user);
-	}
-	echo $renderer->heading(get_string('chooserecorder', 'block_profilepic'), 3, 'main');
-	echo $renderer->show_recorderchoices();
-	echo $renderer->footer();
-	return;
-	
-
-
-  /**
-     * Attempts to open the file
-     *
-     *  open file using the File API.
-     * Return the file handler.
-     *
-     * 
-     * @global object $USER
-     * @return object File handler
-     */
-function block_profilepic_open_file($draftid) {
-        global $USER;
+        file_prepare_draft_area($draftitemid, $usercontextid, 'user', 'icon', 0, null, null);
+        
+        $addform = new block_profilepic_form(null, ['rectype' => $rectype,
+        'usercontextid' => $usercontextid, 
+        'draftitemid' => $draftitemid,
+        'instructions' => $instructions]);
+        
+        $form_data = new stdClass();
+        $addform->set_data($form_data);
+        echo $renderer->show_form($addform, get_string('picformheading', 'block_profilepic'));
+        return;
     
-		$fs = get_file_storage();
-		$context = context_user::instance($USER->id);
-		$files = $fs->get_area_files($context->id,
-									 'user',
-									 'draft',
-									 $draftid,
-									 'id DESC',
-									 false);
-		if (!$files) {
-			return false;
-		}
-
-		while ($file = array_shift($files)){
-			if($file->get_filename() != '.'){
-        		return $file;
-        	}
+    
+    
+    case 'doadd':
+        // Get add form.
+        
+        $add_form = new block_profilepic_form(null, ['rectype' => $rectype,
+            'usercontextid' => $usercontextid,
+            'draftitemid' => $draftitemid,
+            'instructions' => $instructions]);
+        
+        if ($add_form->is_cancelled()) {
+            $message =  get_string('canceledbyuser', 'block_profilepic');
+            break;
         }
+        
+        $data = $add_form->get_data();
+        $success = false;
+
+        if ($data) {
+            $datavars = get_object_vars($data);
+            // This is a bit messy. snapshot stores filename in BPP_filename control
+            // as does choose. But choose does not store file suffix there. We have to add it.
+            // upload file stores draft item id, so we fuddle all that here.
+            switch ($datavars['rectype']) {
+                case block_profilepic_form::BPP_UPLOAD:
+                    $draftitemid = $datavars[block_profilepic_form::BPP_FILENAMECONTROL];
+                    $file = block_profilepic_open_file($draftitemid);
+                    break;
+                case block_profilepic_form::BPP_CHOOSE:
+                    if ($datavars[block_profilepic_form::BPP_FILENAMECONTROL]) {
+                        $avatarpath = $CFG->dirroot . 
+                            '/blocks/profilepic/pix/avatars/' . 
+                            $datavars[block_profilepic_form::BPP_FILENAMECONTROL] .
+                            '.png';
+                        $success = block_profilepic_save_profile_image($avatarpath);
+                    }
+                    $file = false; // logic below requires checks
+                    break;
+                case block_profilepic_form::BPP_SNAPSHOT:
+                case block_profilepic_form::BPP_WHITEBOARD:
+                    $rawdata = $datavars[block_profilepic_form::BPP_FILENAMECONTROL];
+                    // Strip the header "data:image/png;base64,"
+                    if (preg_match('/^data:image\/(\w+);base64,/', $rawdata, $type)) {
+                        $rawdata = substr($rawdata, strpos($rawdata, ',') + 1);
+                        $type = strtolower($type[1]); // jpg, png, gif
+
+                        if (!in_array($type, [ 'jpg', 'jpeg', 'gif', 'png' ])) {
+                             // invalid image type
+                             $file = false;
+                             break;
+                        }
+
+                        $rawdata = base64_decode($rawdata);
+
+                        if ($rawdata === false) {
+                            $file = false;
+                            break;
+                        }
+
+                        $tempdir = make_temp_directory('block_profilepic');
+                        $tempfile = $tempdir . '/' . md5(uniqid()) . '.png';
+                        file_put_contents($tempfile, $rawdata);
+                        
+                        // We set file to false because we don't have a stored_file object
+                        // But we can call save_profile_image right here.
+                        $success = block_profilepic_save_profile_image($tempfile);
+                        @unlink($tempfile);
+                        $file = false; 
+                    } else {
+                         // invalid data
+                         $file = false;
+                    }
+                    break;
+
+                default:
+                    // Should not happen if other cases are removed, but fallback.
+                    $draftitemid = $datavars['draftitemid'] ?? 0;
+                    $file = block_profilepic_open_file($draftitemid);
+            }
+            
+            // logic branches a bit. Avatars are not in moodle file system
+            // so they are done differently.
+            if ($datavars['rectype'] != block_profilepic_form::BPP_CHOOSE && $file) {
+                // copy_content_to_temp() returns path or false? It returns path or throws exception in recent moodle?
+                // Moodle 4.x: stored_file::copy_content_to_temp() returns string|bool.
+                $temppath = $file->copy_content_to_temp();
+                if ($temppath) {
+                    $success = block_profilepic_save_profile_image($temppath);
+                    @unlink($temppath);
+                }
+            }
+        }
+        if ($success) {
+            // Inform user of success.
+            $message = get_string('addedsuccessfully', 'block_profilepic');
+        } else {
+            $message = get_string('failedtoadd', 'block_profilepic');
+        }
+        // Fall through to default to show options again? 
+        // Or maybe redirect? Original code flowed on...
+        
+    case 'chooserecorder':
+    default:
+        // Just flow on.
+
+}
+
+// If we have a status message, display it.
+if ($message) {
+    echo $renderer->heading($message, 5, 'main');
+}
+$user = $DB->get_record('user', ['id' => $USER->id]);
+if ($user && $user->picture) {
+    echo $renderer->show_currentpicture($user);
+}
+echo $renderer->heading(get_string('chooserecorder', 'block_profilepic'), 3, 'main');
+echo $renderer->show_input_choices();
+echo $renderer->footer();
+return;
+
+
+/**
+ * Attempts to open the file
+ *
+ *  open file using the File API.
+ * Return the file handler.
+ *
+ * 
+ * @global object $USER
+ * @param int $draftid
+ * @return stored_file|false File handler
+ */
+function block_profilepic_open_file($draftid) {
+    global $USER;
+    
+    $fs = get_file_storage();
+    $context = context_user::instance($USER->id);
+    $files = $fs->get_area_files($context->id,
+                                 'user',
+                                 'draft',
+                                 $draftid,
+                                 'id DESC',
+                                 false);
+    if (!$files) {
         return false;
     }
+
+    while ($file = array_shift($files)) {
+        if ($file->get_filename() != '.') {
+            return $file;
+        }
+    }
+    return false;
+}
 
 /**
  * Try to save the given file (specified by its full path) as the
  * picture for the user with the given id.
- * @param string $originalfile the full path of the picture file.
+ * @param string $picpath the full path of the picture file.
  *
- * @return mixed new unique revision number or false if not saved
+ * @return bool true if saved, false otherwise
  */
 function block_profilepic_save_profile_image($picpath) {
-	global $DB, $USER;
-	$success = false;
+    global $DB, $USER;
+    $success = false;
     $context = context_user::instance($USER->id);
+    // process_new_icon is a moodle lib function in lib/gdlib.php
     $ret = process_new_icon($context, 'user', 'icon', 0, $picpath);
-    if ($ret){
-    	$success = $DB->set_field('user', 'picture', $ret, array('id'=>$USER->id));
+    if ($ret) {
+        $DB->set_field('user', 'picture', $ret, ['id' => $USER->id]);
+        $success = true;
     }
-    return $success;	
+    return $success;    
 }
 
