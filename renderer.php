@@ -59,13 +59,14 @@ class block_profilepic_renderer extends plugin_renderer_base {
             $this->output->user_picture($user, ['size' => 100]);
     }
     
-    public function show_input_choices(): string {
+    public function show_input_choices(int $instanceid = 0): string {
         global $CFG;
          $def_config = get_config('block_profilepic');
          
         // GET url and hidden field for button forms.
         $actionurl = new moodle_url('/blocks/profilepic/view.php');
         $h_action = html_writer::tag('input', null, ['type' => 'hidden', 'name' => 'action', 'value' => 'add']);
+        $h_instance = html_writer::tag('input', null, ['type' => 'hidden', 'name' => 'instanceid', 'value' => $instanceid]);
         
         // Button template.
         $bigbuttontext = html_writer::tag('span', '@@BUTTONLABEL@@', ['class' => 'block_profilepic_buttontext']);   
@@ -75,6 +76,7 @@ class block_profilepic_renderer extends plugin_renderer_base {
         $h_rectype = html_writer::tag('input', null, ['type' => 'hidden', 'name' => 'rectype', 'value' => '@@RECTYPE@@']);
         $bigbuttoncontainer = html_writer::tag('div', $bigbutton_html  . 
                 $h_action . 
+                $h_instance .
                 $h_rectype .
                 '<br />' . $bigbuttontext  . 
                 '<hr />', ['class' => 'block_profilepic_bigbutton_container']);
@@ -116,14 +118,18 @@ class block_profilepic_renderer extends plugin_renderer_base {
         return $updatelink;     
     }
     
-    public function show_picture_linked(stdClass $user, moodle_page $page): string {
+    public function show_picture_linked(stdClass $user, moodle_page $page, int $instanceid = 0): string {
     
         $actionurl = new moodle_url('/blocks/profilepic/view.php');
         $up = new user_picture($user);
         $up->size = 100;
         $picurl = $up->get_url($page);
         
-        $chooseurl = new moodle_url($actionurl, ['action' => 'chooserecorder']);
+        $params = ['action' => 'chooserecorder'];
+        if ($instanceid) {
+            $params['instanceid'] = $instanceid;
+        }
+        $chooseurl = new moodle_url($actionurl, $params);
         
         $icon = html_writer::tag('img', '',
                 ['src' => $picurl,

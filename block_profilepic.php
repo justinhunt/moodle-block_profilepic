@@ -65,7 +65,7 @@ class block_profilepic extends block_base {
         $user = $DB->get_record('user', ['id' => $USER->id]);
         if ($user) {
             if ($user->picture < 2 || empty($def_config->newonly)) {
-                $this->content->text = $renderer->show_picture_linked($user, $this->page);
+                $this->content->text = $renderer->show_picture_linked($user, $this->page, $this->instance->id);
             } else {
                 $this->content->text = $renderer->show_picture_unlinked($user, $this->page);
             }

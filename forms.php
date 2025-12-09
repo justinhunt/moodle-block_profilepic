@@ -52,16 +52,19 @@ class block_profilepic_form extends moodleform {
         $usercontextid = $this->_customdata['usercontextid'];
         $draftitemid = $this->_customdata['draftitemid'];
         $instructions = $this->_customdata['instructions'];
+        $instanceid = $this->_customdata['instanceid'] ?? 0;
         
         // Add common hidden fields.
         $mform->addElement('hidden', 'draftitemid', $draftitemid);
         $mform->addElement('hidden', 'usercontextid', $usercontextid);
         $mform->addElement('hidden', 'rectype', $rectype);
         $mform->addElement('hidden', 'action', 'doadd');
+        $mform->addElement('hidden', 'instanceid', $instanceid);
         $mform->setType('action', PARAM_TEXT);
         $mform->setType('rectype', PARAM_INT);
         $mform->setType('draftitemid', PARAM_INT);
         $mform->setType('usercontextid', PARAM_INT);
+        $mform->setType('instanceid', PARAM_INT);
 
         // Add form instructions.
         $mform->addElement('static', 'instructions', '', $instructions);
@@ -138,11 +141,12 @@ class block_profilepic_form extends moodleform {
 
             case self::BPP_UPLOAD:
             default:
-                $mform->addElement('filepicker',
+                $filemanageroptions = $this->_customdata['filemanageroptions'] ?? array('maxbytes' => 0, 'subdirs' => 0, 'maxfiles' => 1, 'accepted_types' => '*');
+                $mform->addElement('filemanager',
                     self::BPP_FILENAMECONTROL,
                     get_string('uploadpicture', 'block_profilepic'),
                     null,
-                    ['accepted_types' => 'image']);
+                    $filemanageroptions);
                 $mform->addRule(self::BPP_FILENAMECONTROL,
                     get_string('musthavefile', 'block_profilepic'),
                     'required',

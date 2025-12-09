@@ -36,6 +36,7 @@ require_once($CFG->libdir . '/gdlib.php');
 require_login();
 $action = optional_param('action', 'chooserecorder', PARAM_TEXT); // The user action to take.
 $rectype = optional_param('rectype', 0, PARAM_INT); // The user action to take.
+$instanceid = optional_param('instanceid', 0, PARAM_INT);
 
 
 global $USER, $COURSE, $PAGE, $SITE, $DB;
@@ -65,6 +66,10 @@ if (!has_capability('block/profilepic:viewform', $usercontext)) {
 
 // Get our config.
 $def_config = get_config('block_profilepic');
+$filemanageroptions = array('maxbytes'       => $CFG->maxbytes,
+                             'subdirs'        => 0,
+                             'maxfiles'       => 1,
+                             'accepted_types' => 'image');
 
 // Prepare fileareas etc.
 $usercontextid = context_user::instance($USER->id)->id;
@@ -93,12 +98,14 @@ switch ($action) {
 
     case 'add':
 
-        file_prepare_draft_area($draftitemid, $usercontextid, 'user', 'icon', 0, null, null);
+        file_prepare_draft_area($draftitemid, $usercontextid, 'user', 'icon', 0, $filemanageroptions);
         
         $addform = new block_profilepic_form(null, ['rectype' => $rectype,
         'usercontextid' => $usercontextid, 
         'draftitemid' => $draftitemid,
-        'instructions' => $instructions]);
+        'instructions' => $instructions,
+        'instanceid' => $instanceid,
+        'filemanageroptions' => $filemanageroptions]);
         
         $form_data = new stdClass();
         $addform->set_data($form_data);
@@ -113,7 +120,9 @@ switch ($action) {
         $add_form = new block_profilepic_form(null, ['rectype' => $rectype,
             'usercontextid' => $usercontextid,
             'draftitemid' => $draftitemid,
-            'instructions' => $instructions]);
+            'instructions' => $instructions,
+            'instanceid' => $instanceid,
+            'filemanageroptions' => $filemanageroptions]);
         
         if ($add_form->is_cancelled()) {
             $message =  get_string('canceledbyuser', 'block_profilepic');
@@ -205,6 +214,26 @@ switch ($action) {
         }
         // Fall through to default to show options again? 
         // Or maybe redirect? Original code flowed on...
+        if ($success && $instanceid) {
+            $context = context_block::instance($instanceid);
+            $parentcontext = $context->get_parent_context();
+            $returnurl = new moodle_url('/');
+            $linktext = get_string('home');
+
+            if ($parentcontext->contextlevel == CONTEXT_COURSE) {
+                $returnurl = new moodle_url('/course/view.php', ['id' => $parentcontext->instanceid]);
+                $course = $DB->get_record('course', ['id' => $parentcontext->instanceid]);
+                $linktext = $course->fullname;
+            } else if ($parentcontext->contextlevel == CONTEXT_USER) {
+                $returnurl = new moodle_url('/user/profile.php');
+                $linktext = get_string('profile');
+            }
+            
+            $message .= html_writer::tag('div', 
+                html_writer::link($returnurl, get_string('returnto', 'block_profilepic', $linktext)),
+                ['class' => 'usersuccessfullink']
+            );
+        }
         
     case 'chooserecorder':
     default:
@@ -221,7 +250,7 @@ if ($user && $user->picture) {
     echo $renderer->show_currentpicture($user);
 }
 echo $renderer->heading(get_string('chooserecorder', 'block_profilepic'), 3, 'main');
-echo $renderer->show_input_choices();
+echo $renderer->show_input_choices($instanceid);
 echo $renderer->footer();
 return;
 
@@ -275,6 +304,11 @@ function block_profilepic_save_profile_image($picpath) {
     $ret = process_new_icon($context, 'user', 'icon', 0, $picpath);
     if ($ret) {
         $DB->set_field('user', 'picture', $ret, ['id' => $USER->id]);
+        $USER->picture = $ret;
+        
+        // Trigger event for user update.
+        \core\event\user_updated::create_from_userid($USER->id)->trigger();
+        
         $success = true;
     }
     return $success;    

@@ -74,4 +74,6 @@ $string['instructions_snapshot_def'] = 'Use your webcam to take a picture of you
 $string['instructions_whiteboard'] = 'Instructions for Whiteboard';
 $string['instructions_whiteboard_def'] = 'Draw a picture of yourself on the whiteboard.';
 $string['retake'] = 'Retake';
+$string['returnto'] = 'Return to: {$a}';
+
 
