@@ -230,9 +230,10 @@ switch ($action) {
             }
             
             $message .= html_writer::tag('div', 
-                html_writer::link($returnurl, get_string('returnto', 'block_profilepic', $linktext)),
+                html_writer::link($returnurl, get_string('returnto', 'block_profilepic', $linktext, ),['class' => 'btn btn-primary']),
                 ['class' => 'usersuccessfullink']
             );
+            $message .= '<hr />';
         }
         
     case 'chooserecorder':
@@ -248,6 +249,7 @@ if ($message) {
 $user = $DB->get_record('user', ['id' => $USER->id]);
 if ($user && $user->picture) {
     echo $renderer->show_currentpicture($user);
+    echo '<hr />';
 }
 echo $renderer->heading(get_string('chooserecorder', 'block_profilepic'), 3, 'main');
 echo $renderer->show_input_choices($instanceid);
